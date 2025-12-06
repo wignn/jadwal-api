@@ -10,6 +10,9 @@ RUN bun install --production --frozen-lockfile
 
 FROM base AS builder
 
+ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
+ENV DATABASE_URL=$DATABASE_URL
+
 COPY package.json bun.lockb* ./
 
 RUN bun install --frozen-lockfile
