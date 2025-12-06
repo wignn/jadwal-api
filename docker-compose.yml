@@ -1,0 +1,74 @@
+services:
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dean-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/dean_backend?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - dean-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: dean-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dean_backend
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - dean-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prisma Studio (Optional - for development)
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dean-prisma-studio
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/dean_backend?schema=public
+    command: ["bunx", "prisma", "studio", "--port", "5555", "--hostname", "0.0.0.0"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - dean-network
+    profiles:
+      - dev
+
+volumes:
+  postgres-data:
+    driver: local
+
+networks:
+  dean-network:
+    driver: bridge
