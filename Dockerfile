@@ -36,6 +36,7 @@ COPY --from=deps --chown=bunuser:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=bunuser:nodejs /app/src/generated ./src/generated
 
 COPY --chown=bunuser:nodejs prisma ./prisma
+COPY --chown=bunuser:nodejs prisma.config.ts ./
 COPY --chown=bunuser:nodejs src ./src
 COPY --chown=bunuser:nodejs package.json ./
 
